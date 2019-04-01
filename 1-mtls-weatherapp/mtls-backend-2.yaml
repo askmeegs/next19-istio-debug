@@ -17,17 +17,6 @@ metadata:
   name: "weather-backend-mtls"
 spec:
   targets:
-  - name: weather-backend
+  - name: weather-backend #host 
   peers:
   - mtls: {}
----
-apiVersion: "networking.istio.io/v1alpha3"
-kind: "DestinationRule"
-metadata:
-  name: "weather-backend-dr"
-  namespace: "default"
-spec:
-  host: "weather-backend.default.svc.cluster.local"
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
