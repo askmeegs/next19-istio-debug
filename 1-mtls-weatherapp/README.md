@@ -1,7 +1,7 @@
 # notes - debugging istio mtls + weatherapp 
 
 prerequisites 
-- cluster with the istio add-on
+- permissive cluster with the istio add-on
 - inject default namespace 
 
 
@@ -9,18 +9,18 @@ https://bani.com.br/2018/08/istio-mtls-debugging-a-503-error/
 https://istio.io/help/ops/security/keys-and-certs/
 https://istio.io/help/ops/security/mutual-tls/
 
-## 1 - Create secret 
+## Create secret 
 
 ```
-kubectl create secret generic openweathermap --from-literal=apikey="<api-key-here>"
+kubectl create secret generic openweathermap --from-literal=apikey="62bc56feae84c10baabb80a1369359c9"
 ```
 
-## 2 - Deploy weatherapp 
+## Deploy weatherapp / make sure it's working  
 
 
-## 3 - Hit in browser 
+## Hit in browser 
 
-## 4 - Enable mtls for the weather-backend  
+## Enable mtls for the weather-backend  
 
 ```
 kubectl apply -f mtls-backend-1.yaml
@@ -30,9 +30,7 @@ Open the frontend:
 
 ![screenshot](mtls-error.png)
 
-Oh no! Why did enabling mTLS for one service cause a 503 error between the frontend and the backend(s)? 
-
-This is an Envoy error. 
+503 
 
 ## Envoy logs 
 
@@ -64,7 +62,7 @@ stern weather-backend -c istio-proxy
 Which control plane component is responsible for sending mTLS policies to envoys? https://istio.io/docs/concepts/security/#high-level-architecture (It's pilot) 
 
 ```
-stern -n istio-system pilot -c pilot
+stern -n istio-system pilot -c discovery
 ```
 
 Remove policy then re-create it to see the logs. 
@@ -88,6 +86,59 @@ Envoy LDS (Listeners) https://www.envoyproxy.io/docs/envoy/latest/configuration/
 
 Pilot is sending the mTLS policy to ONE of the weather backends (`single`) -- but where is the other? (`multiple`)? 
 And if this is the case, then why are we seeing 503 errors 100% of the time, not half the time? 
+
+## Open the Envoy Admin console on the weather-backend pod 
+
+```
+kubectl port-forward weather-backend-multiple-68798f5c49-7pnsd 15000:15000
+```
+
+go to localhost:15000 
+
+## Set logging to trace 
+
+exec into backend pod 
+
+curl -X POST "http://localhost:15000/logging?level=trace"
+
+
+## View the backend proxy logs again 
+
+```
+kubectl logs weather-backend-multiple-68798f5c49-7pnsd -c istio-proxy | grep handshake
+```
+
+*this tells us that the frontend is not authenticating properly to the backend via mtLS* 
+
+
+## Is the control plane doing its job?
+
+Check that citadel is actually generating certs 
+
+```
+kubectl get secret istio.default
+```
+
+Is the cert valid? 
+
+```
+kubectl get secret -o json istio.default | jq -r '.data["cert-chain.pem"]' | base64 --decode | openssl x509 -noout -text
+```
+
+## Is this cert being correctly mounted into the pods? 
+
+```
+kubectl exec -it weather-backend-multiple-68798f5c49-7pnsd -c istio-proxy -- ls /etc/certs
+
+kubectl exec -it weather-frontend-7ff5d6d698-j5nhl -c istio-proxy -- ls /etc/certs
+```
+
+## Hypothesis, after all this 
+
+*so it must be our fault.*
+
+*let's check our config* 
+
 
 ## Back to the YAML 
 

@@ -17,6 +17,6 @@ metadata:
   name: "weather-backend-mtls"
 spec:
   targets:
-  - name: vs-weather-backend #host 
+  - name: vs-weather-backend 
   peers:
   - mtls: {}
