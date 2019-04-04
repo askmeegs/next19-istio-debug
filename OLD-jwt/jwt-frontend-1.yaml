@@ -14,17 +14,23 @@
 apiVersion: "authentication.istio.io/v1alpha1"
 kind: "Policy"
 metadata:
-  name: "weather-frontend-authn"
+  name: "weather-frontend-jwt"
 spec:
   targets:
   - name: weather-frontend
-  peers:
-  - mtls: {}
   origins:
   - jwt:
       issuer: "testing@secure.istio.io"
       jwksUri: "https://raw.githubusercontent.com/istio/istio/release-1.0/security/tools/jwt/samples/jwks.json"
-  principalBinding: USE_ORIGIN
+---
+apiVersion: "authentication.istio.io/v1alpha1"
+kind: "Policy"
+metadata:
+  name: "default" #mTLS for the entire default namespace 
+  namespace: "default"
+spec:
+  peers:
+  - mtls: {}
 ---
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
@@ -32,7 +38,7 @@ metadata:
   name: "weather-frontend-dr"
   namespace: "default"
 spec:
-  host: "weather-frontend.default.svc.cluster.local"
+  host: "weather-frontend"
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL

@@ -59,6 +59,9 @@ stern weather-backend -c istio-proxy
 
 ## Control plane logs 
 
+
+
+
 Which control plane component is responsible for sending mTLS policies to envoys? https://istio.io/docs/concepts/security/#high-level-architecture (It's pilot) 
 
 ```
@@ -86,6 +89,14 @@ Envoy LDS (Listeners) https://www.envoyproxy.io/docs/envoy/latest/configuration/
 
 Pilot is sending the mTLS policy to ONE of the weather backends (`single`) -- but where is the other? (`multiple`)? 
 And if this is the case, then why are we seeing 503 errors 100% of the time, not half the time? 
+
+## Citadel logs 
+
+Istio mTLS also needs Citadel to work. 
+
+```
+kubectl get deploy -l istio=citadel -n istio-system
+```
 
 ## Open the Envoy Admin console on the weather-backend pod 
 
