@@ -71,7 +71,7 @@ spec:
     spec:
       containers:
       - name: weather-backend
-        image: gcr.io/next19-istio-debug/weather-backend-single:1.0
+        image: gcr.io/next19-istio-debug/weather-backend-single:1.1
         imagePullPolicy: Always
         env:
         - name: OWM_API_KEY
@@ -102,7 +102,7 @@ spec:
     spec:
       containers:
       - name: weather-backend
-        image: gcr.io/next19-istio-debug/weather-backend-multiple:1.0
+        image: gcr.io/next19-istio-debug/weather-backend-multiple:1.1
         imagePullPolicy: Always
         env:
         - name: OWM_API_KEY
@@ -156,25 +156,28 @@ spec:
     - weather-backend
   http:
   - route:
-    - destination:
-        host: weather-backend
-        subset: single
-        port:
-          number: 5000
-      weight: 50
+    # - destination:
+    #     host: weather-backend
+    #     subset: single
+    #     port:
+    #       number: 5000
+    #   weight: 10
     - destination:
         host: weather-backend
         subset: multiple
         port:
           number: 5000
-      weight: 50
+      # weight: 90
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: dr-weather-backend
+  name: weather-backend
 spec:
   host: weather-backend
+  trafficPolicy:
+    tls:
+      mode: DISABLE
   subsets:
   - name: single
     labels:

@@ -1,5 +1,5 @@
 apiVersion: "authentication.istio.io/v1alpha1"
-kind: "Policy"  # tells weather-backend to only receive TLS traffic ("server")
+kind: "Policy"
 metadata:
   name: "weather-backend"
 spec:
@@ -9,11 +9,18 @@ spec:
   - mtls: {}
 ---
 apiVersion: "networking.istio.io/v1alpha3"
-kind: "DestinationRule" # tells clients OF weather-backend to use TLS only ("client")
+kind: "DestinationRule"
 metadata:
-  name: "dr-weather-backend"
+  name: "weather-backend"
 spec:
   host: "weather-backend.default.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
+  subsets:
+  - name: single
+    labels:
+      version: single
+  - name: multiple
+    labels:
+      version: multiple
